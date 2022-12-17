@@ -1,27 +1,12 @@
 import os # access my csv files
 import numpy as np # linear algebra(used for normalization)
 import pandas as pd # To create and utilize datsets
-#import warnings # warning filter
 import scipy as sp # to pivot my table
-
-
-#ML model
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import cosine_similarity # ML model
 
 
 #default theme and settings
 pd.options.display.max_columns
-
-#warning handle
-#warnings.filterwarnings("always")
-#warnings.filterwarnings("ignore")
-
-
-def find_files():
-    for dirname, _, filenames in os.walk('./'):
-        for filename in filenames:
-            print(os.path.join(dirname, filename))
-
 
 # Storing paths to both datasets
 movie_path = "movies.csv"
@@ -79,23 +64,23 @@ print(pivot_df.head())
 
 # Fill all NaN values with -1 and then drop the columns with all -1(no user rated the movie)
 pivot_n = pivot_df.apply(lambda x: (x-np.mean(x))/(np.max(x)-np.min(x)), axis=1)       # normalization
-pivot_n.fillna(-1, inplace=True)        #replace NaN with -1
+pivot_n.fillna(-1, inplace=True)        # replace NaN with -1
 pivot_n = pivot_n.T     # transpose pivot for dropping -1's
-pivot_n = pivot_n.loc[:, (pivot_n != -1).any(axis=0)]
+pivot_n = pivot_n.loc[:, (pivot_n != -1).any(axis=0)]   # dropping columns with the value of 0(meaning unrated movies)
 print(pivot_n)
-piv_sparse = sp.sparse.csr_matrix(pivot_n.values)
+piv_sparse = sp.sparse.csr_matrix(pivot_n.values)       # convert to sparse matrix format for similarity computation
 print(pivot_n)
 
-movie_similarity = cosine_similarity(piv_sparse)
+movie_similarity = cosine_similarity(piv_sparse)        # generate model based on cosine similarity comparisons
 
-mov_sim_df = pd.DataFrame(movie_similarity, index = pivot_n.index, columns = pivot_n.index)
+mov_sim_df = pd.DataFrame(movie_similarity, index = pivot_n.index, columns = pivot_n.index)     # df of movie similarities
 
     
 def movieRecommendation(mov_name, num_recommendations):
     number = 1
     print('Recommended because you watched {}:\n'.format(mov_name))
-    for anime in mov_sim_df.sort_values(by = mov_name, ascending = False).index[1:num_recommendations+1]:
-        print(f'#{number}: {anime}, {round(mov_sim_df[anime][mov_name]*100,2)}% match')
+    for movie in mov_sim_df.sort_values(by = mov_name, ascending = False).index[1:num_recommendations+1]:
+        print(f'#{number}: {movie}, {round(mov_sim_df[movie][mov_name]*100,2)}% match')
         number +=1  
 
 if __name__ == "__main__":
